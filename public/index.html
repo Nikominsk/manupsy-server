@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <style>
+        .my-message {
+            color: blue;
+        }
+    </style>
+  </head>
+  <body>
+    <p id="server-time"></p>
+
+    
+    <div id = "chatDiv">
+
+        <div id = "chat-text">
+            <div>Messages:</div>
+        </div>
+
+        <form id = "chat-form">
+            <input type = "text" id ="chat-input" placeholder="Write here">
+        </form>
+    </div>
+
+
+    <script>
+        let HOST = location.origin.replace(/^http/, 'ws')
+        let ws = new WebSocket(HOST);
+        let el;
+
+
+        let chatText = document.getElementById('chat-text');
+        let chatInput = document.getElementById('chat-input');
+        let chatForm = document.getElementById('chat-form');
+        let myId = null;
+
+
+        chatForm.onsubmit = function(e) {
+            e.preventDefault();
+            let msg = {
+                type: "msg",
+                clientId: myId,
+                text: chatInput.value,
+            }
+            ws.send(JSON.stringify(msg));
+            chatInput.value = '';
+        };
+
+
+        ws.onmessage = (event) => {
+            var msg = JSON.parse(event.data);
+            console.log(msg);
+            switch(msg.type) {
+                case "id":
+                    myId = msg.text;
+                    console.log('I received my id: ' + myId);
+                    break;
+                case "msg":
+                    console.log('try to add to chat');
+                    if(msg.clientId === myId)
+                        chatText.innerHTML += '<p class="my-message">' + msg.text + '</p>';
+                    else
+                        chatText.innerHTML += '<p>' + msg.clientId + ': ' + msg.text + '</p>';
+
+                    break;
+                case "time":
+                    el = document.getElementById('server-time');
+                    el.innerHTML = 'Server time: ' + msg.text;
+                    break;
+            }
+
+        };
+
+
+    </script>
+
+  </body>
+</html>
